@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // リストIDは32文字のランダムな英数字。リンクを知っている人だけが読み書きできる
+    match /lists/{listId} {
+      allow get, write: if request.auth != null && listId.matches('^[a-f0-9]{32}$');
+
+      match /items/{itemId} {
+        allow read, delete: if request.auth != null && listId.matches('^[a-f0-9]{32}$');
+        allow create, update: if request.auth != null
+          && listId.matches('^[a-f0-9]{32}$')
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 60;
+      }
+    }
+  }
+}

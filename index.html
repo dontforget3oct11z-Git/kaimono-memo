@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ふたりの買い物メモ</title>
+<meta name="theme-color" content="#2f7d4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="買い物メモ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a memo pad; add bar on top, list in the middle, basket section below. */
+:root {
+  --bg: #f3f5f0; --paper: #ffffff; --ink: #1f2a22; --muted: #6b766d; --line: #dfe5dc;
+  --accent: #2f7d4f; --accent-ink: #ffffff; --accent-soft: #e3f0e7; --danger: #c2462e;
+  --font-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141a16; --paper: #1d2520; --ink: #e8efe9; --muted: #98a59b; --line: #2e3a32;
+    --accent: #5fbf85; --accent-ink: #0f1a13; --accent-soft: #23362a; --danger: #ef7a62;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+.wrap { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; margin: 0; letter-spacing: .02em; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .95rem; }
+.count b { color: var(--accent); font-size: 1.3rem; font-family: var(--font-display); }
+.status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
+.status.warn { color: var(--danger); }
+
+form.add {
+  display: flex; gap: 8px; background: var(--paper); border: 1px solid var(--line);
+  border-radius: 14px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+form.add input { font: inherit; font-size: 16px; color: var(--ink); background: transparent; border: 0; outline: none; min-width: 0; }
+#name { flex: 1 1 auto; padding: 8px 10px; }
+#qty { width: 4.2em; flex: 0 0 auto; padding: 8px 6px; border-left: 1px solid var(--line); text-align: center; }
+form.add input:focus-visible { background: var(--accent-soft); border-radius: 8px; }
+button { font: inherit; cursor: pointer; }
+.btn {
+  flex: 0 0 auto; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; padding: 8px 16px;
+}
+.btn.ghost { background: var(--accent-soft); color: var(--ink); font-weight: 500; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: default; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chips-label { font-size: .8rem; color: var(--muted); letter-spacing: .05em; margin-right: 2px; }
+.chip { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 3px 12px; font-size: .9rem; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+section h2 {
+  font-family: var(--font-display); font-size: 1rem; font-weight: 700; margin: 0 0 8px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted);
+}
+ul { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+ul:empty { display: none; }
+li { display: flex; align-items: center; border-top: 1px solid var(--line); }
+li:first-child { border-top: 0; }
+.toggle { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; background: transparent; color: inherit; text-align: left; padding: 12px 14px; }
+.box { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--line); display: grid; place-items: center; transition: background .15s, border-color .15s; }
+.box svg { width: 14px; height: 14px; opacity: 0; color: var(--accent-ink); }
+.label { min-width: 0; overflow-wrap: anywhere; }
+.qty { margin-left: 6px; font-size: .85rem; color: var(--muted); white-space: nowrap; }
+li.done .box { background: var(--accent); border-color: var(--accent); }
+li.done .box svg { opacity: 1; }
+li.done .label { text-decoration: line-through; color: var(--muted); }
+.del { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); width: 44px; height: 44px; margin-right: 4px; border-radius: 10px; font-size: 1.2rem; line-height: 1; }
+.del:hover { color: var(--danger); background: var(--accent-soft); }
+.link-btn { border: 0; background: transparent; color: var(--danger); font-size: .85rem; padding: 4px 6px; border-radius: 6px; }
+
+.empty { text-align: center; color: var(--muted); padding: 28px 16px; border: 1.5px dashed var(--line); border-radius: 14px; font-size: .95rem; }
+.empty strong { display: block; font-family: var(--font-display); color: var(--ink); font-size: 1.05rem; margin-bottom: 4px; }
+
+.share { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.share p { margin: 0; font-size: .9rem; }
+.share-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.share-url { flex: 1 1 220px; min-width: 0; font: inherit; font-size: .8rem; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.setup { background: var(--paper); border: 1px solid var(--danger); border-radius: 14px; padding: 16px; }
+.setup h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.1rem; }
+.setup p { margin: 0; font-size: .9rem; }
+footer { font-size: .8rem; color: var(--muted); text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .box { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ふたりの買い物メモ</h1>
+    <div class="count" aria-live="polite">残り <b id="remain">0</b> 点</div>
+  </header>
+
+  <div class="setup" id="setup" hidden>
+    <h2>初期設定がまだです</h2>
+    <p>このファイルの <code>firebaseConfig</code> に、Firebase の設定値を入れてください。</p>
+  </div>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <input id="name" name="name" placeholder="例：牛乳" maxlength="60" aria-label="買うもの" enterkeyhint="done">
+    <input id="qty" name="qty" placeholder="数" maxlength="10" aria-label="数量">
+    <button class="btn" id="addBtn" type="submit">追加</button>
+  </form>
+
+  <div class="chips" id="chips" hidden></div>
+  <div class="status" id="status">読み込み中…</div>
+
+  <section>
+    <h2><span>買うもの</span></h2>
+    <ul id="todo"></ul>
+    <div class="empty" id="emptyTodo" hidden>
+      <strong>買うものはありません</strong>
+      上の欄に入力して「追加」を押すと、ふたりの画面にすぐ出ます。
+    </div>
+  </section>
+
+  <section id="doneSection" hidden>
+    <h2><span>カゴに入れた</span><button class="link-btn" id="clearDone" type="button">まとめて消す</button></h2>
+    <ul id="done"></ul>
+  </section>
+
+  <div class="share" id="shareBox" hidden>
+    <p><strong>パートナーと共有する</strong><br>このリンクを送って開いてもらうと、同じリストを一緒に使えます。リンクを知っている人は誰でも編集できるので、ふたり以外には送らないでください。</p>
+    <div class="share-row">
+      <input class="share-url" id="shareUrl" readonly aria-label="共有リンク">
+      <button class="btn" id="copyBtn" type="button">コピー</button>
+    </div>
+  </div>
+
+  <footer>
+    <span>項目をタップするとチェック、もう一度タップで戻せます。</span>
+    <button class="link-btn" id="showShare" type="button" style="color:var(--accent)">共有リンクを表示</button>
+  </footer>
+</div>
+
+<script type="module">
+// ===== ここに Firebase の設定を貼り付けます =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAuRZLMiXGuAP3s6Yp5s1d2ZgQO3grHTEk",
+  authDomain: "kaimono-memo-85b7c.firebaseapp.com",
+  projectId: "kaimono-memo-85b7c",
+  storageBucket: "kaimono-memo-85b7c.firebasestorage.app",
+  messagingSenderId: "678844101065",
+  appId: "1:678844101065:web:d2cefbcc3ea73ca3a8f818",
+};
+// ===============================================
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
+  collection, doc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot, writeBatch,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const $ = (id) => document.getElementById(id);
+const CHECK_SVG = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+let items = [], history = [], ready = false, listRef = null, itemsCol = null;
+
+function setStatus(text, warn) { $("status").textContent = text; $("status").classList.toggle("warn", !!warn); }
+
+// ---- リストID（リンクの # 以降）。これを知っている人だけが同じリストを見られる ----
+function randomId() {
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+function readListId() {
+  const m = location.hash.match(/list=([a-f0-9]{32})/);
+  if (m) return m[1];
+  try { const s = localStorage.getItem("listId"); if (s && /^[a-f0-9]{32}$/.test(s)) return s; } catch (e) {}
+  return null;
+}
+let listId = readListId();
+let isNew = false;
+if (!listId) { listId = randomId(); isNew = true; }
+try { localStorage.setItem("listId", listId); } catch (e) {}
+if (!location.hash.includes(listId)) history_replace();
+function history_replace() { window.history.replaceState(null, "", location.pathname + location.search + "#list=" + listId); }
+function shareLink() { return location.origin + location.pathname + "#list=" + listId; }
+$("shareUrl").value = shareLink();
+$("shareBox").hidden = !isNew;
+$("showShare").addEventListener("click", () => { $("shareBox").hidden = false; $("shareBox").scrollIntoView({ behavior: "smooth" }); });
+$("copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(shareLink()); $("copyBtn").textContent = "コピーしました"; }
+  catch (e) { $("shareUrl").select(); }
+  setTimeout(() => { $("copyBtn").textContent = "コピー"; }, 2000);
+});
+window.addEventListener("hashchange", () => { if (readListIdFromHash() && readListIdFromHash() !== listId) location.reload(); });
+function readListIdFromHash() { const m = location.hash.match(/list=([a-f0-9]{32})/); return m && m[1]; }
+
+// ---- 表示 ----
+function render() {
+  const todo = items.filter((i) => !i.done).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  const done = items.filter((i) => i.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+  $("remain").textContent = todo.length;
+  fillList($("todo"), todo);
+  fillList($("done"), done);
+  $("emptyTodo").hidden = todo.length > 0;
+  $("doneSection").hidden = done.length === 0;
+  renderChips();
+}
+function fillList(ul, list) {
+  ul.textContent = "";
+  for (const it of list) {
+    const li = document.createElement("li");
+    if (it.done) li.className = "done";
+    const t = document.createElement("button");
+    t.type = "button"; t.className = "toggle"; t.disabled = !ready;
+    t.setAttribute("aria-pressed", it.done ? "true" : "false");
+    const box = document.createElement("span"); box.className = "box"; box.innerHTML = CHECK_SVG;
+    const label = document.createElement("span"); label.className = "label"; label.textContent = it.name;
+    if (it.qty) { const q = document.createElement("span"); q.className = "qty"; q.textContent = "× " + it.qty; label.appendChild(q); }
+    t.append(box, label);
+    t.addEventListener("click", () => toggle(it));
+    const del = document.createElement("button");
+    del.type = "button"; del.className = "del"; del.textContent = "×"; del.disabled = !ready;
+    del.setAttribute("aria-label", it.name + " を削除");
+    del.addEventListener("click", () => remove([it]));
+    li.append(t, del);
+    ul.appendChild(li);
+  }
+}
+function renderChips() {
+  const box = $("chips");
+  const onList = new Set(items.filter((i) => !i.done).map((i) => i.name));
+  const names = history.filter((n) => !onList.has(n)).slice(0, 10);
+  box.textContent = "";
+  box.hidden = names.length === 0 || !ready;
+  if (box.hidden) return;
+  const l = document.createElement("span"); l.className = "chips-label"; l.textContent = "最近買ったもの";
+  box.appendChild(l);
+  for (const n of names) {
+    const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = "+ " + n;
+    c.addEventListener("click", () => addItem(n, ""));
+    box.appendChild(c);
+  }
+}
+
+// ---- 書き込み（オフラインでも画面にはすぐ反映され、つながった時に送信されます） ----
+function writeFailed(e) {
+  console.error(e);
+  setStatus("保存できませんでした。通信状態を確認してもう一度お試しください。", true);
+}
+function addItem(name, qty) {
+  name = String(name).trim().slice(0, 60); qty = String(qty || "").trim().slice(0, 10);
+  if (!name || !ready) return;
+  addDoc(itemsCol, { name, qty, done: false, createdAt: Date.now(), doneAt: 0 }).catch(writeFailed);
+}
+function toggle(it) {
+  if (!ready) return;
+  updateDoc(doc(itemsCol, it.id), { done: !it.done, doneAt: it.done ? 0 : Date.now() }).catch(writeFailed);
+}
+function remove(list) {
+  if (!ready || list.length === 0) return;
+  const batch = writeBatch(listRef.firestore);
+  for (const it of list) batch.delete(doc(itemsCol, it.id));
+  const bought = list.filter((i) => i.done).map((i) => i.name);
+  if (bought.length) batch.set(listRef, { history: [...new Set([...bought, ...history])].slice(0, 30) }, { merge: true });
+  batch.commit().catch(writeFailed);
+}
+
+$("addForm").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const n = $("name").value, q = $("qty").value;
+  if (!n.trim()) { $("name").focus(); return; }
+  addItem(n, q);
+  $("name").value = ""; $("qty").value = ""; $("name").focus();
+});
+$("clearDone").addEventListener("click", () => remove(items.filter((i) => i.done)));
+render();
+
+// ---- Firebase 接続 ----
+if (firebaseConfig.apiKey.startsWith("YOUR_")) {
+  $("setup").hidden = false; $("addBtn").disabled = true;
+  setStatus("Firebase の設定が入っていません。", true);
+} else {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+  if (new URLSearchParams(location.search).get("emulator") === "1") {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  }
+  listRef = doc(db, "lists", listId);
+  itemsCol = collection(listRef, "items");
+  let started = false;
+  onAuthStateChanged(auth, (user) => {
+    if (!user || started) return;
+    started = true; ready = true; render();
+    const timer = setTimeout(() => setStatus("サーバーにつながりません。オフラインでも追加はでき、つながると送信されます。", true), 10000);
+    onSnapshot(itemsCol, { includeMetadataChanges: true }, (snap) => {
+      items = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      if (!snap.metadata.fromCache) { clearTimeout(timer); setStatus("ふたりの画面に自動で反映されます"); }
+      render();
+    }, (e) => { clearTimeout(timer); console.error(e); setStatus("同期できませんでした。Firebase のルール設定を確認してください。", true); });
+    onSnapshot(listRef, (snap) => {
+      const d = snap.data();
+      history = d && Array.isArray(d.history) ? d.history.filter((n) => typeof n === "string") : [];
+      renderChips();
+    }, () => {});
+  });
+  signInAnonymously(auth).catch((e) => {
+    console.error(e);
+    setStatus("ログインできませんでした。Firebase で「匿名」ログインが有効か確認してください。", true);
+  });
+}
+</script>
+</body>
+</html>
