@@ -47,7 +47,26 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; marg
 .status { font-size: .85rem; color: var(--muted); min-height: 1.2em; }
 .status.warn { color: var(--danger); }
 
+.add-row { display: flex; gap: 8px; min-width: 0; }
+.repeat { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 0; }
+.repeat label { position: relative; cursor: pointer; }
+.repeat input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.repeat span { display: inline-block; font-size: .85rem; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.repeat input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 700; }
+.repeat input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.badge { display: inline-block; margin-left: 8px; font-size: .72rem; padding: 0 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; vertical-align: 1px; }
+.h2-note { font-family: var(--font-body); font-weight: 400; font-size: .8rem; }
+.reg { padding: 10px 6px 10px 14px; gap: 8px; flex-wrap: wrap; }
+.reg-main { flex: 1 1 160px; min-width: 0; }
+.reg-name { overflow-wrap: anywhere; }
+.reg-sub { font-size: .8rem; color: var(--muted); }
+.reg-sub.due { color: var(--danger); }
+.reg-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.reg select { font: inherit; font-size: .85rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; }
+.mini { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 8px; font-size: .85rem; padding: 4px 10px; white-space: nowrap; }
+.empty.small { padding: 16px; font-size: .85rem; text-align: left; }
 form.add {
+  flex-direction: column;
   display: flex; gap: 8px; background: var(--paper); border: 1px solid var(--line);
   border-radius: 14px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
 }
@@ -116,9 +135,17 @@ footer { font-size: .8rem; color: var(--muted); text-align: center; display: fle
   </div>
 
   <form class="add" id="addForm" autocomplete="off">
-    <input id="name" name="name" placeholder="例：牛乳" maxlength="60" aria-label="買うもの" enterkeyhint="done">
-    <input id="qty" name="qty" placeholder="数" maxlength="10" aria-label="数量">
-    <button class="btn" id="addBtn" type="submit">追加</button>
+    <div class="add-row">
+      <input id="name" name="name" placeholder="例：牛乳" maxlength="60" aria-label="買うもの" enterkeyhint="done">
+      <input id="qty" name="qty" placeholder="数" maxlength="10" aria-label="数量">
+      <button class="btn" id="addBtn" type="submit">追加</button>
+    </div>
+    <div class="repeat" role="radiogroup" aria-label="買う頻度">
+      <label><input type="radio" name="repeat" id="rep0" value="0" checked><span>今回だけ</span></label>
+      <label><input type="radio" name="repeat" id="rep7" value="7"><span>毎週</span></label>
+      <label><input type="radio" name="repeat" id="rep14" value="14"><span>2週ごと</span></label>
+      <label><input type="radio" name="repeat" id="rep30" value="30"><span>毎月</span></label>
+    </div>
   </form>
 
   <div class="chips" id="chips" hidden></div>
@@ -138,6 +165,14 @@ footer { font-size: .8rem; color: var(--muted); text-align: center; display: fle
     <ul id="done"></ul>
   </section>
 
+  <section id="regSection">
+    <h2><span>いつも買うもの</span><span class="h2-note" id="regCount"></span></h2>
+    <ul id="regs"></ul>
+    <div class="empty small" id="emptyRegs">
+      追加するときに「毎週」「毎月」などを選ぶと、ここに登録されます。<br>買ってリストから消すと、次の時期に自動でリストに戻ります。
+    </div>
+  </section>
+
   <div class="share" id="shareBox" hidden>
     <p><strong>パートナーと共有する</strong><br>このリンクを送って開いてもらうと、同じリストを一緒に使えます。リンクを知っている人は誰でも編集できるので、ふたり以外には送らないでください。</p>
     <div class="share-row">
@@ -147,7 +182,7 @@ footer { font-size: .8rem; color: var(--muted); text-align: center; display: fle
   </div>
 
   <footer>
-    <span>項目をタップするとチェック、もう一度タップで戻せます。</span>
+    <span>項目をタップするとチェック、もう一度タップで戻せます。<br>「いつもの」の × は「今回は買わない」で、次の時期にまた入ります。</span>
     <button class="link-btn" id="showShare" type="button" style="color:var(--accent)">共有リンクを表示</button>
   </footer>
 </div>
@@ -168,32 +203,35 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
-  collection, doc, addDoc, updateDoc, deleteDoc, setDoc, onSnapshot, writeBatch,
+  collection, doc, addDoc, updateDoc, setDoc, onSnapshot, writeBatch, deleteField,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
 const CHECK_SVG = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-let items = [], history = [], ready = false, listRef = null, itemsCol = null;
+const DAY = 86400000;
+const INTERVALS = [[7, "毎週"], [14, "2週ごと"], [30, "毎月"], [60, "2か月ごと"]];
+const intervalLabel = (d) => (INTERVALS.find((x) => x[0] === d) || [0, d + "日ごと"])[1];
+let items = [], history = [], regulars = {}, ready = false, listRef = null, itemsCol = null;
+let itemsLive = false, listLive = false;
 
 function setStatus(text, warn) { $("status").textContent = text; $("status").classList.toggle("warn", !!warn); }
-
-// ---- リストID（リンクの # 以降）。これを知っている人だけが同じリストを見られる ----
-function randomId() {
-  const a = new Uint8Array(16); crypto.getRandomValues(a);
+function randomHex(bytes) {
+  const a = new Uint8Array(bytes); crypto.getRandomValues(a);
   return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+// ---- リストID（リンクの # 以降）。これを知っている人だけが同じリストを見られる ----
+function readListIdFromHash() { const m = location.hash.match(/list=([a-f0-9]{32})/); return m && m[1]; }
 function readListId() {
-  const m = location.hash.match(/list=([a-f0-9]{32})/);
-  if (m) return m[1];
+  const h = readListIdFromHash(); if (h) return h;
   try { const s = localStorage.getItem("listId"); if (s && /^[a-f0-9]{32}$/.test(s)) return s; } catch (e) {}
   return null;
 }
 let listId = readListId();
 let isNew = false;
-if (!listId) { listId = randomId(); isNew = true; }
+if (!listId) { listId = randomHex(16); isNew = true; }
 try { localStorage.setItem("listId", listId); } catch (e) {}
-if (!location.hash.includes(listId)) history_replace();
-function history_replace() { window.history.replaceState(null, "", location.pathname + location.search + "#list=" + listId); }
+if (!location.hash.includes(listId)) window.history.replaceState(null, "", location.pathname + location.search + "#list=" + listId);
 function shareLink() { return location.origin + location.pathname + "#list=" + listId; }
 $("shareUrl").value = shareLink();
 $("shareBox").hidden = !isNew;
@@ -203,8 +241,15 @@ $("copyBtn").addEventListener("click", async () => {
   catch (e) { $("shareUrl").select(); }
   setTimeout(() => { $("copyBtn").textContent = "コピー"; }, 2000);
 });
-window.addEventListener("hashchange", () => { if (readListIdFromHash() && readListIdFromHash() !== listId) location.reload(); });
-function readListIdFromHash() { const m = location.hash.match(/list=([a-f0-9]{32})/); return m && m[1]; }
+window.addEventListener("hashchange", () => { const h = readListIdFromHash(); if (h && h !== listId) location.reload(); });
+
+// ---- いつも買うもの ----
+const regItemId = (rid) => "reg-" + rid;
+const nextDue = (r) => (r.lastBought || 0) + (r.interval || 7) * DAY;
+const regList = () => Object.entries(regulars)
+  .filter(([, r]) => r && typeof r.name === "string")
+  .map(([rid, r]) => Object.assign({ rid }, r));
+function fmtDate(t) { const d = new Date(t); return (d.getMonth() + 1) + "/" + d.getDate(); }
 
 // ---- 表示 ----
 function render() {
@@ -215,6 +260,7 @@ function render() {
   fillList($("done"), done);
   $("emptyTodo").hidden = todo.length > 0;
   $("doneSection").hidden = done.length === 0;
+  renderRegs();
   renderChips();
 }
 function fillList(ul, list) {
@@ -228,20 +274,63 @@ function fillList(ul, list) {
     const box = document.createElement("span"); box.className = "box"; box.innerHTML = CHECK_SVG;
     const label = document.createElement("span"); label.className = "label"; label.textContent = it.name;
     if (it.qty) { const q = document.createElement("span"); q.className = "qty"; q.textContent = "× " + it.qty; label.appendChild(q); }
+    const r = it.rid && regulars[it.rid];
+    if (r) { const b = document.createElement("span"); b.className = "badge"; b.textContent = "↻ " + intervalLabel(r.interval); label.appendChild(b); }
     t.append(box, label);
     t.addEventListener("click", () => toggle(it));
     const del = document.createElement("button");
     del.type = "button"; del.className = "del"; del.textContent = "×"; del.disabled = !ready;
-    del.setAttribute("aria-label", it.name + " を削除");
+    del.setAttribute("aria-label", it.name + (r ? " を今回は買わない" : " を削除"));
+    del.title = r ? "今回は買わない（次の時期にまた入ります）" : "削除";
     del.addEventListener("click", () => remove([it]));
     li.append(t, del);
+    ul.appendChild(li);
+  }
+}
+function renderRegs() {
+  const ul = $("regs");
+  const list = regList().sort((a, b) => nextDue(a) - nextDue(b));
+  const onList = new Set(items.map((i) => i.id));
+  ul.textContent = "";
+  $("emptyRegs").hidden = list.length > 0;
+  $("regCount").textContent = list.length ? list.length + " 件" : "";
+  for (const r of list) {
+    const li = document.createElement("li"); li.className = "reg";
+    const main = document.createElement("div"); main.className = "reg-main";
+    const nm = document.createElement("div"); nm.className = "reg-name"; nm.textContent = r.name;
+    if (r.qty) { const q = document.createElement("span"); q.className = "qty"; q.textContent = "× " + r.qty; nm.appendChild(q); }
+    const sub = document.createElement("div"); sub.className = "reg-sub";
+    const inList = onList.has(regItemId(r.rid));
+    if (inList) sub.textContent = "リストに入っています";
+    else if (nextDue(r) <= Date.now()) { sub.textContent = "買いどきです"; sub.classList.add("due"); }
+    else sub.textContent = "次は " + fmtDate(nextDue(r)) + " ごろリストに入ります";
+    main.append(nm, sub);
+
+    const act = document.createElement("div"); act.className = "reg-actions";
+    const sel = document.createElement("select"); sel.id = "int-" + r.rid; sel.disabled = !ready;
+    sel.setAttribute("aria-label", r.name + " の頻度");
+    const opts = INTERVALS.some((x) => x[0] === r.interval) ? INTERVALS : [...INTERVALS, [r.interval, intervalLabel(r.interval)]];
+    for (const [d, lab] of opts) { const o = document.createElement("option"); o.value = d; o.textContent = lab; if (d === r.interval) o.selected = true; sel.appendChild(o); }
+    sel.addEventListener("change", () => updateDoc(listRef, { ["regulars." + r.rid + ".interval"]: Number(sel.value) }).catch(writeFailed));
+    act.appendChild(sel);
+    if (!inList) {
+      const now = document.createElement("button"); now.type = "button"; now.className = "mini"; now.textContent = "今すぐ追加"; now.disabled = !ready;
+      now.addEventListener("click", () => putRegularOnList(r));
+      act.appendChild(now);
+    }
+    const stop = document.createElement("button"); stop.type = "button"; stop.className = "del"; stop.textContent = "×"; stop.disabled = !ready;
+    stop.setAttribute("aria-label", r.name + " をいつも買うものから外す"); stop.title = "いつも買うものから外す";
+    stop.addEventListener("click", () => stopRegular(r));
+    act.appendChild(stop);
+    li.append(main, act);
     ul.appendChild(li);
   }
 }
 function renderChips() {
   const box = $("chips");
   const onList = new Set(items.filter((i) => !i.done).map((i) => i.name));
-  const names = history.filter((n) => !onList.has(n)).slice(0, 10);
+  const regNames = new Set(regList().map((r) => r.name));
+  const names = history.filter((n) => !onList.has(n) && !regNames.has(n)).slice(0, 10);
   box.textContent = "";
   box.hidden = names.length === 0 || !ready;
   if (box.hidden) return;
@@ -249,7 +338,7 @@ function renderChips() {
   box.appendChild(l);
   for (const n of names) {
     const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = "+ " + n;
-    c.addEventListener("click", () => addItem(n, ""));
+    c.addEventListener("click", () => addItem(n, "", 0));
     box.appendChild(c);
   }
 }
@@ -259,30 +348,79 @@ function writeFailed(e) {
   console.error(e);
   setStatus("保存できませんでした。通信状態を確認してもう一度お試しください。", true);
 }
-function addItem(name, qty) {
+function putRegularOnList(r) {
+  return setDoc(doc(itemsCol, regItemId(r.rid)), { name: r.name, qty: r.qty || "", done: false, createdAt: Date.now(), doneAt: 0, rid: r.rid }).catch(writeFailed);
+}
+function addItem(name, qty, interval) {
   name = String(name).trim().slice(0, 60); qty = String(qty || "").trim().slice(0, 10);
   if (!name || !ready) return;
-  addDoc(itemsCol, { name, qty, done: false, createdAt: Date.now(), doneAt: 0 }).catch(writeFailed);
+  if (!interval) { addDoc(itemsCol, { name, qty, done: false, createdAt: Date.now(), doneAt: 0 }).catch(writeFailed); return; }
+  // 同じ名前がすでに「いつもの」にあれば、それを更新して使う
+  const existing = regList().find((r) => r.name === name);
+  const rid = existing ? existing.rid : randomHex(8);
+  const reg = { name, qty, interval, lastBought: existing ? existing.lastBought || 0 : 0, createdAt: existing ? existing.createdAt || Date.now() : Date.now() };
+  const batch = writeBatch(listRef.firestore);
+  batch.set(listRef, { regulars: { [rid]: reg } }, { merge: true });
+  if (!items.some((i) => i.id === regItemId(rid))) {
+    batch.set(doc(itemsCol, regItemId(rid)), { name, qty, done: false, createdAt: Date.now(), doneAt: 0, rid });
+  }
+  batch.commit().catch(writeFailed);
 }
 function toggle(it) {
   if (!ready) return;
   updateDoc(doc(itemsCol, it.id), { done: !it.done, doneAt: it.done ? 0 : Date.now() }).catch(writeFailed);
 }
+// リストから消す。「いつもの」は、買った日（または見送った日）から次の時期を数え直す
 function remove(list) {
   if (!ready || list.length === 0) return;
   const batch = writeBatch(listRef.firestore);
-  for (const it of list) batch.delete(doc(itemsCol, it.id));
-  const bought = list.filter((i) => i.done).map((i) => i.name);
-  if (bought.length) batch.set(listRef, { history: [...new Set([...bought, ...history])].slice(0, 30) }, { merge: true });
+  const regUpdates = {};
+  for (const it of list) {
+    batch.delete(doc(itemsCol, it.id));
+    if (it.rid && regulars[it.rid]) {
+      const t = it.done ? (it.doneAt || Date.now()) : Date.now();
+      regUpdates["regulars." + it.rid + ".lastBought"] = t;
+      // 手元の表示にも先に反映（2つの更新が別々に届く間に、自動追加が走らないように）
+      regulars = Object.assign({}, regulars, { [it.rid]: Object.assign({}, regulars[it.rid], { lastBought: t }) });
+    }
+  }
+  const bought = list.filter((i) => i.done && !(i.rid && regulars[i.rid])).map((i) => i.name);
+  const newHistory = bought.length ? [...new Set([...bought, ...history])].slice(0, 30) : null;
+  if (Object.keys(regUpdates).length) {
+    // 「いつもの」があるならリストの文書は必ず存在するので、項目単位で更新する
+    if (newHistory) regUpdates.history = newHistory;
+    batch.update(listRef, regUpdates);
+  } else if (newHistory) {
+    batch.set(listRef, { history: newHistory }, { merge: true });
+  }
   batch.commit().catch(writeFailed);
 }
+function stopRegular(r) {
+  if (!ready) return;
+  updateDoc(listRef, { ["regulars." + r.rid]: deleteField() }).catch(writeFailed);
+}
+// 時期が来た「いつもの」を自動でリストに入れる（同じIDで書くので、2台で同時に動いても重複しない）
+const pending = new Set();
+function autoAdd() {
+  if (!ready || !itemsLive || !listLive) return;
+  const ids = new Set(items.map((i) => i.id));
+  for (const r of regList()) {
+    const id = regItemId(r.rid);
+    if (ids.has(id) || pending.has(id) || nextDue(r) > Date.now()) continue;
+    pending.add(id);
+    putRegularOnList(r).finally(() => pending.delete(id));
+  }
+}
+setInterval(autoAdd, 60 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { autoAdd(); render(); } });
 
 $("addForm").addEventListener("submit", (ev) => {
   ev.preventDefault();
   const n = $("name").value, q = $("qty").value;
+  const interval = Number((document.querySelector('input[name="repeat"]:checked') || {}).value || 0);
   if (!n.trim()) { $("name").focus(); return; }
-  addItem(n, q);
-  $("name").value = ""; $("qty").value = ""; $("name").focus();
+  addItem(n, q, interval);
+  $("name").value = ""; $("qty").value = ""; $("rep0").checked = true; $("name").focus();
 });
 $("clearDone").addEventListener("click", () => remove(items.filter((i) => i.done)));
 render();
@@ -308,13 +446,15 @@ if (firebaseConfig.apiKey.startsWith("YOUR_")) {
     const timer = setTimeout(() => setStatus("サーバーにつながりません。オフラインでも追加はでき、つながると送信されます。", true), 10000);
     onSnapshot(itemsCol, { includeMetadataChanges: true }, (snap) => {
       items = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-      if (!snap.metadata.fromCache) { clearTimeout(timer); setStatus("ふたりの画面に自動で反映されます"); }
-      render();
+      if (!snap.metadata.fromCache) { itemsLive = true; clearTimeout(timer); setStatus("ふたりの画面に自動で反映されます"); }
+      render(); autoAdd();
     }, (e) => { clearTimeout(timer); console.error(e); setStatus("同期できませんでした。Firebase のルール設定を確認してください。", true); });
-    onSnapshot(listRef, (snap) => {
+    onSnapshot(listRef, { includeMetadataChanges: true }, (snap) => {
       const d = snap.data();
       history = d && Array.isArray(d.history) ? d.history.filter((n) => typeof n === "string") : [];
-      renderChips();
+      regulars = d && d.regulars && typeof d.regulars === "object" ? d.regulars : {};
+      if (!snap.metadata.fromCache) listLive = true;
+      render(); autoAdd();
     }, () => {});
   });
   signInAnonymously(auth).catch((e) => {
