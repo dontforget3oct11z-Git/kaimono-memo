@@ -1,13 +1,98 @@
 {
- "updatedAt": "2026-11-24T17:53:04.320Z",
+ "updatedAt": "2026-11-24T17:54:02.422Z",
  "stores": [
   {
    "id": "tomods-44",
    "name": "トモズ 赤坂店",
    "url": "https://shop.tomods.jp/detail/44/notice/",
-   "count": 0
+   "count": 25
   }
  ],
- "deals": [],
+ "deals": [
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-23",
+   "title": "STポイント5倍",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-25",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-25",
+   "title": "STポイント 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-26",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-26",
+   "title": "STポイント 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-27",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-27",
+   "title": "STポイント 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-28",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-28",
+   "title": "STポイント 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-29",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-29",
+   "title": "STポイント 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  },
+  {
+   "store": "tomods-44",
+   "storeName": "トモズ 赤坂店",
+   "date": "2026-11-30",
+   "title": "会員様限定STポイント1000P以上ご利用で100Pが戻ってくるキャンペーン",
+   "url": "https://shop.tomods.jp/detail/44/notice/1974542/"
+  }
+ ],
  "errors": []
 }
