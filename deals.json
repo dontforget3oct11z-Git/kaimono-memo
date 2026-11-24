@@ -1,1 +1,98 @@
-{"updatedAt":null,"stores":[],"deals":[],"errors":[]}
+{
+ "updatedAt": "2026-11-24T17:50:14.199Z",
+ "stores": [
+  {
+   "id": "tomods-137",
+   "name": "トモズ 八王子店",
+   "url": "https://shop.tomods.jp/detail/137/notice/",
+   "count": 22
+  }
+ ],
+ "deals": [
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-22",
+   "title": "dポイント・ポンタ利用販促日",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-25",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/2021347/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-25",
+   "title": "超ST祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-26",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/2021347/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-26",
+   "title": "超ST祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-27",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/2021347/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-27",
+   "title": "超ST祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-28",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/2021347/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-28",
+   "title": "超ST祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-29",
+   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/2021347/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-29",
+   "title": "超ST祭り",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  },
+  {
+   "store": "tomods-137",
+   "storeName": "トモズ 八王子店",
+   "date": "2026-11-30",
+   "title": "STポイントお得な利用日",
+   "url": "https://shop.tomods.jp/detail/137/notice/1973813/"
+  }
+ ],
+ "errors": []
+}
