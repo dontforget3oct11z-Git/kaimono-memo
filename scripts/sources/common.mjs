@@ -59,5 +59,16 @@ export function splitDaysLabel(line) {
   return { label, days };
 }
 
+// 「【2・16・23日】」のように日にちだけの行（内容は次の行に書かれている）
+const DATE_ONLY = /^[【\[［]?\s*((?:\d{1,2}\s*日?\s*(?:\([^)]{1,4}\)\s*)*[~〜\-–・,、.\s]*)+)\s*[】\]］]?\s*[:：]?$/u;
+export function daysOnly(line) {
+  const t = tidy(line);
+  if (/\d{3,}/.test(t)) return null; // 「2026.10.31」のような投稿日は除く
+  const m = t.match(DATE_ONLY);
+  if (!m) return null;
+  const days = parseDays(m[1]);
+  return days.length ? days : null;
+}
+
 // お得日らしい内容か（あいさつ文などを除く）
 export const looksLikeDeal = (s) => /倍|ポイント|祭|セール|割引|%\s*OFF|円引|お得|特売|ST|販促|ボーナス/i.test(s);
