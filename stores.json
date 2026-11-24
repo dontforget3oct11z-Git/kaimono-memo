@@ -1,0 +1,6 @@
+{
+  "_説明": "自動でお得日を取り込むお店の一覧です。source は scripts/sources/ にある読み取り方法の名前です。",
+  "stores": [
+    { "id": "tomods-137", "name": "トモズ 八王子店", "source": "tomods", "shopId": 137 }
+  ]
+}

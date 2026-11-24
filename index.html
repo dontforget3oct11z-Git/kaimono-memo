@@ -64,6 +64,24 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; marg
 .reg-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
 .reg select { font: inherit; font-size: .85rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; }
 .mini { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 8px; font-size: .85rem; padding: 4px 10px; white-space: nowrap; }
+.deals { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.deals h2 { margin: 0; font-family: var(--font-display); font-size: 1rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.today { background: var(--accent-soft); border-radius: 10px; padding: 8px 12px; }
+.today-head { font-size: .78rem; font-weight: 700; color: var(--accent); letter-spacing: .05em; }
+.deal-row { display: grid; grid-template-columns: 4.6em 1fr; gap: 2px 10px; font-size: .9rem; padding: 4px 0; border-top: 1px dashed var(--line); align-items: baseline; }
+.deal-row:first-child { border-top: 0; }
+.today .deal-row { grid-template-columns: 1fr; border-top-color: transparent; }
+.deal-date { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .82rem; white-space: nowrap; }
+.deal-body { min-width: 0; overflow-wrap: anywhere; }
+.deal-store { font-size: .75rem; color: var(--muted); margin-right: 6px; }
+.deal-body a { color: inherit; text-decoration-color: var(--line); }
+.deal-meta { font-size: .75rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.deal-form { display: grid; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.deal-form .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.deal-form input, .deal-form select { font: inherit; font-size: 16px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0; flex: 1 1 140px; }
+.manual-list { list-style: none; margin: 0; padding: 0; border: 0; background: transparent; }
+.manual-list li { border-top: 1px dashed var(--line); font-size: .85rem; justify-content: space-between; gap: 6px; }
+.manual-list .del { width: 36px; height: 36px; }
 .empty.small { padding: 16px; font-size: .85rem; text-align: left; }
 form.add {
   flex-direction: column;
@@ -151,6 +169,33 @@ footer { font-size: .8rem; color: var(--muted); text-align: center; display: fle
   <div class="chips" id="chips" hidden></div>
   <div class="status" id="status">読み込み中…</div>
 
+  <section class="deals" id="dealsBox" aria-label="お店のお得日">
+    <h2><span>お店のお得日</span><button class="link-btn" id="dealAddToggle" type="button" style="color:var(--accent)">＋ 手で追加</button></h2>
+    <div class="today" id="dealToday" hidden><div class="today-head">今日</div><div id="dealTodayList"></div></div>
+    <div id="dealUpcoming"></div>
+    <button class="link-btn" id="dealMore" type="button" style="color:var(--accent);align-self:flex-start" hidden>もっと見る</button>
+    <div class="empty small" id="dealEmpty" hidden>これから2週間のお得日はまだありません。</div>
+    <div class="deal-meta" id="dealMeta"></div>
+    <form class="deal-form" id="dealForm" hidden autocomplete="off">
+      <div class="row">
+        <input id="dealStore" placeholder="お店（例：〇〇スーパー）" maxlength="30" aria-label="お店">
+        <input id="dealTitle" placeholder="内容（例：ポイント5倍）" maxlength="40" aria-label="内容">
+      </div>
+      <div class="row">
+        <select id="dealKind" aria-label="日にちの決め方">
+          <option value="monthly">毎月この日</option>
+          <option value="dates">日付を指定</option>
+        </select>
+        <input id="dealDays" placeholder="日にち（例：5,15,25）" inputmode="numeric" aria-label="毎月の日にち">
+        <input id="dealFrom" type="date" aria-label="開始日" hidden>
+        <input id="dealTo" type="date" aria-label="終了日（1日だけなら空欄）" hidden>
+      </div>
+      <div class="row"><button class="btn" type="submit">登録する</button><button class="btn ghost" type="button" id="dealCancel">閉じる</button></div>
+      <ul class="manual-list" id="manualList"></ul>
+    </form>
+  </section>
+
+
   <section>
     <h2><span>買うもの</span></h2>
     <ul id="todo"></ul>
@@ -211,7 +256,7 @@ const CHECK_SVG = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5
 const DAY = 86400000;
 const INTERVALS = [[7, "毎週"], [14, "2週ごと"], [30, "毎月"], [60, "2か月ごと"]];
 const intervalLabel = (d) => (INTERVALS.find((x) => x[0] === d) || [0, d + "日ごと"])[1];
-let items = [], history = [], regulars = {}, ready = false, listRef = null, itemsCol = null;
+let items = [], history = [], regulars = {}, manualDeals = {}, autoDeals = { deals: [], stores: [] }, dealsExpanded = false, ready = false, listRef = null, itemsCol = null;
 let itemsLive = false, listLive = false;
 
 function setStatus(text, warn) { $("status").textContent = text; $("status").classList.toggle("warn", !!warn); }
@@ -411,8 +456,112 @@ function autoAdd() {
     putRegularOnList(r).finally(() => pending.delete(id));
   }
 }
+
+// ---- お店のお得日 ----
+// 自動取り込み分は GitHub Actions が毎朝 deals.json に書き出す。手で登録した分は Firestore（リストの文書の deals）に保存
+const WD = "日月火水木金土";
+const pad2 = (n) => String(n).padStart(2, "0");
+const isoLocal = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+const labelDate = (iso) => { const d = new Date(iso + "T00:00:00"); return (d.getMonth() + 1) + "/" + d.getDate() + "(" + WD[d.getDay()] + ")"; };
+const DEALS_URLS = ["https://raw.githubusercontent.com/dontforget3oct11z-Git/kaimono-memo/main/deals.json", "deals.json"];
+async function loadAutoDeals() {
+  for (const u of DEALS_URLS) {
+    try {
+      const res = await fetch(u + "?t=" + Math.floor(Date.now() / 600000), { cache: "no-store" });
+      if (!res.ok) continue;
+      const j = await res.json();
+      if (j && Array.isArray(j.deals)) { autoDeals = j; renderDeals(); return; }
+    } catch (e) {}
+  }
+}
+function manualOccurrences(fromIso, toIso) {
+  const out = [];
+  for (const [id, m] of Object.entries(manualDeals)) {
+    if (!m || typeof m.title !== "string") continue;
+    if (m.kind === "monthly" && Array.isArray(m.days)) {
+      const d = new Date(fromIso + "T00:00:00"), end = new Date(toIso + "T00:00:00");
+      for (; d <= end; d.setDate(d.getDate() + 1)) if (m.days.includes(d.getDate())) out.push({ date: isoLocal(d), title: m.title, storeName: m.store || "", manual: id });
+    } else if (m.kind === "dates" && typeof m.from === "string") {
+      const d = new Date(m.from + "T00:00:00"), end = new Date((m.to || m.from) + "T00:00:00");
+      for (let i = 0; d <= end && i < 62; d.setDate(d.getDate() + 1), i++) { const iso = isoLocal(d); if (iso >= fromIso && iso <= toIso) out.push({ date: iso, title: m.title, storeName: m.store || "", manual: id }); }
+    }
+  }
+  return out;
+}
+function dealRow(x, withDate) {
+  const row = document.createElement("div"); row.className = "deal-row";
+  if (withDate) { const dt = document.createElement("span"); dt.className = "deal-date"; dt.textContent = labelDate(x.date); row.appendChild(dt); }
+  const body = document.createElement("span"); body.className = "deal-body";
+  if (x.storeName) { const st = document.createElement("span"); st.className = "deal-store"; st.textContent = x.storeName; body.appendChild(st); }
+  if (x.url && /^https:\/\//.test(x.url)) { const a = document.createElement("a"); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = x.title; body.appendChild(a); }
+  else body.appendChild(document.createTextNode(x.title));
+  row.appendChild(body);
+  return row;
+}
+function renderDeals() {
+  const today = isoLocal(new Date());
+  const until = isoLocal(new Date(Date.now() + 13 * DAY));
+  const all = [...(autoDeals.deals || []).filter((x) => typeof x.date === "string" && typeof x.title === "string"), ...manualOccurrences(today, until)]
+    .filter((x) => x.date >= today && x.date <= until)
+    .sort((a, b) => a.date.localeCompare(b.date) || String(a.storeName).localeCompare(String(b.storeName)));
+  const todays = all.filter((x) => x.date === today), later = all.filter((x) => x.date > today);
+  $("dealToday").hidden = todays.length === 0;
+  $("dealTodayList").textContent = ""; for (const x of todays) $("dealTodayList").appendChild(dealRow(x, false));
+  const shown = dealsExpanded ? later : later.slice(0, 3);
+  $("dealUpcoming").textContent = ""; for (const x of shown) $("dealUpcoming").appendChild(dealRow(x, true));
+  $("dealMore").hidden = later.length <= 3;
+  $("dealMore").textContent = dealsExpanded ? "閉じる" : "もっと見る（あと " + (later.length - 3) + " 件）";
+  $("dealEmpty").hidden = all.length > 0;
+  const meta = $("dealMeta"); meta.textContent = "";
+  for (const s of autoDeals.stores || []) {
+    const sp = document.createElement("span");
+    sp.textContent = (s.error ? "⚠ " : "") + s.name + "：自動取り込み" + (s.error ? "に失敗（前回の情報を表示）" : "");
+    meta.appendChild(sp);
+  }
+  if (autoDeals.updatedAt) { const u = new Date(autoDeals.updatedAt); const sp = document.createElement("span"); sp.textContent = (u.getMonth() + 1) + "/" + u.getDate() + " " + u.getHours() + ":" + pad2(u.getMinutes()) + " 更新"; meta.appendChild(sp); }
+  renderManualList();
+}
+function renderManualList() {
+  const ul = $("manualList"); ul.textContent = "";
+  for (const [id, m] of Object.entries(manualDeals)) {
+    if (!m || typeof m.title !== "string") continue;
+    const li = document.createElement("li");
+    const t = document.createElement("span");
+    const when = m.kind === "monthly" ? "毎月 " + (m.days || []).join("・") + "日" : labelDate(m.from) + (m.to && m.to !== m.from ? "〜" + labelDate(m.to) : "");
+    t.textContent = (m.store ? m.store + "：" : "") + m.title + "（" + when + "）";
+    const del = document.createElement("button"); del.type = "button"; del.className = "del"; del.textContent = "×"; del.setAttribute("aria-label", m.title + " を削除");
+    del.addEventListener("click", () => updateDoc(listRef, { ["deals." + id]: deleteField() }).catch(writeFailed));
+    li.append(t, del); ul.appendChild(li);
+  }
+}
+$("dealMore").addEventListener("click", () => { dealsExpanded = !dealsExpanded; renderDeals(); });
+$("dealAddToggle").addEventListener("click", () => { $("dealForm").hidden = !$("dealForm").hidden; if (!$("dealForm").hidden) $("dealStore").focus(); });
+$("dealCancel").addEventListener("click", () => { $("dealForm").hidden = true; });
+$("dealKind").addEventListener("change", () => {
+  const monthly = $("dealKind").value === "monthly";
+  $("dealDays").hidden = !monthly; $("dealFrom").hidden = monthly; $("dealTo").hidden = monthly;
+});
+$("dealForm").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  if (!ready) return;
+  const store = $("dealStore").value.trim().slice(0, 30), title = $("dealTitle").value.trim().slice(0, 40);
+  if (!title) { $("dealTitle").focus(); return; }
+  let deal;
+  if ($("dealKind").value === "monthly") {
+    const days = [...new Set(($("dealDays").value.normalize("NFKC").match(/\d{1,2}/g) || []).map(Number).filter((d) => d >= 1 && d <= 31))].sort((a, b) => a - b);
+    if (!days.length) { $("dealDays").focus(); return; }
+    deal = { store, title, kind: "monthly", days, createdAt: Date.now() };
+  } else {
+    const from = $("dealFrom").value, to = $("dealTo").value || from;
+    if (!from) { $("dealFrom").focus(); return; }
+    deal = { store, title, kind: "dates", from, to: to < from ? from : to, createdAt: Date.now() };
+  }
+  setDoc(listRef, { deals: { [randomHex(6)]: deal } }, { merge: true }).catch(writeFailed);
+  $("dealTitle").value = ""; $("dealDays").value = ""; $("dealFrom").value = ""; $("dealTo").value = "";
+});
+loadAutoDeals();
 setInterval(autoAdd, 60 * 60 * 1000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { autoAdd(); render(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { autoAdd(); render(); renderDeals(); loadAutoDeals(); } });
 
 $("addForm").addEventListener("submit", (ev) => {
   ev.preventDefault();
@@ -453,6 +602,8 @@ if (firebaseConfig.apiKey.startsWith("YOUR_")) {
       const d = snap.data();
       history = d && Array.isArray(d.history) ? d.history.filter((n) => typeof n === "string") : [];
       regulars = d && d.regulars && typeof d.regulars === "object" ? d.regulars : {};
+      manualDeals = d && d.deals && typeof d.deals === "object" ? d.deals : {};
+      renderDeals();
       if (!snap.metadata.fromCache) listLive = true;
       render(); autoAdd();
     }, () => {});
