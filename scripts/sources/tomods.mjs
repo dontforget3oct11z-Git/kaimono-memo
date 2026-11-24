@@ -66,10 +66,15 @@ export async function fetchDeals(store, { now = new Date(), get = fetchText } = 
       const month = Number(cal[1]);
       const year = month < postedMonth ? postedYear + 1 : postedYear;
       const lines = htmlToLines(await get(n.url));
-      for (const d of parseCalendar(lines, year, month)) deals.push({ ...d, url: n.url });
+      const found = parseCalendar(lines, year, month);
+      console.log(`  [カレンダー] ${n.posted} ${n.title}: ${found.length} 件`);
+      if (!found.length) console.log(lines.slice(0, 60).map((l) => "    | " + l).join("\n"));
+      for (const d of found) deals.push({ ...d, url: n.url });
       continue;
     }
-    for (const d of parseCampaignTitle(n.title, postedYear)) deals.push({ ...d, url: n.url });
+    const found = parseCampaignTitle(n.title, postedYear);
+    console.log(`  [お知らせ] ${n.posted} ${n.title}: ${found.length} 件`);
+    for (const d of found) deals.push({ ...d, url: n.url });
   }
   return { deals, sourceUrl: listUrl };
 }
