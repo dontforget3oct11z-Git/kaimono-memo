@@ -1,49 +1,13 @@
 {
- "updatedAt": "2026-11-24T17:51:28.204Z",
+ "updatedAt": "2026-11-24T17:53:04.320Z",
  "stores": [
   {
    "id": "tomods-44",
    "name": "トモズ 赤坂店",
    "url": "https://shop.tomods.jp/detail/44/notice/",
-   "count": 5
+   "count": 0
   }
  ],
- "deals": [
-  {
-   "store": "tomods-44",
-   "storeName": "トモズ 赤坂店",
-   "date": "2026-11-25",
-   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
-   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
-  },
-  {
-   "store": "tomods-44",
-   "storeName": "トモズ 赤坂店",
-   "date": "2026-11-26",
-   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
-   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
-  },
-  {
-   "store": "tomods-44",
-   "storeName": "トモズ 赤坂店",
-   "date": "2026-11-27",
-   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
-   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
-  },
-  {
-   "store": "tomods-44",
-   "storeName": "トモズ 赤坂店",
-   "date": "2026-11-28",
-   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
-   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
-  },
-  {
-   "store": "tomods-44",
-   "storeName": "トモズ 赤坂店",
-   "date": "2026-11-29",
-   "title": "全品10倍&対象商品最大60倍 超ポイント祭り",
-   "url": "https://shop.tomods.jp/detail/44/notice/2021420/"
-  }
- ],
+ "deals": [],
  "errors": []
 }
