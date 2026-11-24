@@ -48,5 +48,16 @@ export function splitLabelDays(line) {
   return { label, days };
 }
 
+// 「【2・16・23日】 STポイント5倍」「11~13日：ポイント10倍」のように日にちが先に来る形
+const DATE_HEAD = /^(?:[【\[［]\s*((?:\d{1,2}\s*日?\s*(?:\([^)]{1,4}\)\s*)*[~〜\-–・,、.\s]*)+)\s*[】\]］]|((?:\d{1,2}\s*日?\s*(?:\([^)]{1,4}\)\s*)*[~〜\-–・,、.\s]*)+)\s*[:：])\s*(.+)$/u;
+export function splitDaysLabel(line) {
+  const t = tidy(line);
+  const m = t.match(DATE_HEAD);
+  if (!m) return null;
+  const label = m[3].trim(), days = parseDays(m[1] || m[2]);
+  if (!label || /^\d/.test(label) || days.length === 0) return null;
+  return { label, days };
+}
+
 // お得日らしい内容か（あいさつ文などを除く）
 export const looksLikeDeal = (s) => /倍|ポイント|祭|セール|割引|%\s*OFF|円引|お得|特売|ST|販促|ボーナス/i.test(s);

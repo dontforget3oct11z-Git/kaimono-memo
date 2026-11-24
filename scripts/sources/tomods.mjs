@@ -1,6 +1,6 @@
 // トモズ：各店舗の「お知らせ」から、イベントカレンダーと期間限定キャンペーンを読み取る
 // 一覧: https://shop.tomods.jp/detail/{shopId}/notice/
-import { fetchText, htmlToLines, tidy, ymd, splitLabelDays, looksLikeDeal } from "./common.mjs";
+import { fetchText, htmlToLines, tidy, ymd, splitLabelDays, splitDaysLabel, looksLikeDeal } from "./common.mjs";
 
 const BASE = "https://shop.tomods.jp";
 
@@ -25,7 +25,8 @@ export function parseNoticeList(html, shopId) {
 export function parseCalendar(lines, year, month) {
   const deals = [];
   for (const line of lines) {
-    const r = splitLabelDays(line);
+    // 店舗によって「内容 → 日にち」と「【日にち】 内容」の2通りの書き方がある
+    const r = splitLabelDays(line) || splitDaysLabel(line);
     if (!r || !looksLikeDeal(r.label)) continue;
     for (const d of r.days) deals.push({ date: ymd(year, month, d), title: r.label });
   }

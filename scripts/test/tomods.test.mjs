@@ -51,3 +51,13 @@ test("年またぎのカレンダー（12月投稿の1月カレンダー）", as
   const r = await fetchDeals({ shopId: 1 }, { now: new Date("2026-12-31T00:00:00Z"), get: async (u) => (u.endsWith("/notice/") ? list : body) });
   assert.deepEqual(r.deals.map((x) => x.date), ["2027-01-05"]);
 });
+
+test("日にちが先に来る書き方（赤坂店）", () => {
+  const html = `<p>🍁11月イベントカレンダー🍁<br>【2・16・23日】 STポイント５倍✨<br>【11～13日】 ｄポイント・ポンタポイント10倍✨<br>【4～6日】 STポイント全品10倍＆化粧品15倍💄<br>※急遽変更する場合がございます。</p>`;
+  const d = parseCalendar(htmlToLines(html), 2026, 11);
+  const by = (t) => d.filter((x) => x.title === t).map((x) => x.date.slice(8));
+  assert.deepEqual(by("STポイント5倍"), ["02", "16", "23"]);
+  assert.deepEqual(by("dポイント・ポンタポイント10倍"), ["11", "12", "13"]);
+  assert.deepEqual(by("STポイント全品10倍&化粧品15倍"), ["04", "05", "06"]);
+  assert.equal(d.length, 9);
+});
